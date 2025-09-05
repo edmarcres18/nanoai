@@ -46,12 +46,13 @@ app.post('/api/telegram/setup', async (req, res) => {
         }
 
         // Set webhook for the bot
+        const baseUrl = 'https://tnano.netlify.app';
         const telegramUrl = `https://api.telegram.org/bot${botToken}/setWebhook`;
         const webhookResponse = await fetch(telegramUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                url: webhookUrl || `${req.protocol}://${req.get('host')}/webhook/${botToken}`
+                url: webhookUrl || `${baseUrl}/webhook/${botToken}`
             })
         });
 
@@ -61,13 +62,13 @@ app.post('/api/telegram/setup', async (req, res) => {
             // Store bot configuration
             botConfigs.set(botToken, {
                 token: botToken,
-                webhookUrl: webhookUrl || `${req.protocol}://${req.get('host')}/webhook/${botToken}`,
+                webhookUrl: webhookUrl || `${baseUrl}/webhook/${botToken}`,
                 setupTime: new Date()
             });
             
             res.json({ 
                 success: true, 
-                webhookUrl: webhookUrl || `${req.protocol}://${req.get('host')}/webhook/${botToken}`,
+                webhookUrl: webhookUrl || `${baseUrl}/webhook/${botToken}`,
                 message: 'Telegram bot webhook set successfully'
             });
         } else {
