@@ -199,23 +199,55 @@ class NanoBananaAI {
         this.userInput.style.height = Math.min(this.userInput.scrollHeight, 120) + 'px';
     }
 
-    setupTelegramBot() {
+    async setupTelegramBot() {
         const token = this.botTokenInput.value.trim();
         if (!token) {
             this.showNotification('Please enter a valid bot token', 'error');
             return;
         }
 
-        this.botToken = token;
-        localStorage.setItem('telegram_bot_token', token);
-        this.updateWebhookUrl();
-        this.showNotification('Telegram bot configured successfully!', 'success');
+        if (!this.apiKey) {
+            this.showNotification('Please set up your Gemini API key first', 'error');
+            return;
+        }
+
+        try {
+            this.showLoading(true);
+            
+            // Call the server to set up the webhook
+            const response = await fetch('/.netlify/functions/telegram-setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    botToken: token,
+                    apiKey: this.apiKey
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.botToken = token;
+                localStorage.setItem('telegram_bot_token', token);
+                this.updateWebhookUrl();
+                this.showNotification('Telegram bot configured successfully!', 'success');
+            } else {
+                this.showNotification(`Failed to setup bot: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error setting up Telegram bot:', error);
+            this.showNotification('Failed to setup Telegram bot. Please try again.', 'error');
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     updateWebhookUrl() {
         if (this.botToken) {
-            // In a real implementation, this would be your server's webhook endpoint
-            this.webhookUrl = `https://tnano.netlify.app/webhook/${this.botToken}`;
+            // Netlify function webhook endpoint
+            this.webhookUrl = `https://tnano.netlify.app/.netlify/functions/telegram-webhook/${this.botToken}`;
             this.webhookUrlSpan.textContent = this.webhookUrl;
             this.copyWebhookBtn.disabled = false;
         }

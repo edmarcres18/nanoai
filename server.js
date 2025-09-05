@@ -39,7 +39,7 @@ app.post('/api/gemini', async (req, res) => {
 // Telegram webhook setup
 app.post('/api/telegram/setup', async (req, res) => {
     try {
-        const { botToken, webhookUrl } = req.body;
+        const { botToken, webhookUrl, apiKey } = req.body;
         
         if (!botToken) {
             return res.status(400).json({ error: 'Bot token is required' });
@@ -63,6 +63,7 @@ app.post('/api/telegram/setup', async (req, res) => {
             botConfigs.set(botToken, {
                 token: botToken,
                 webhookUrl: webhookUrl || `${baseUrl}/webhook/${botToken}`,
+                apiKey: apiKey, // Store API key for this bot
                 setupTime: new Date()
             });
             
@@ -133,13 +134,20 @@ async function processTelegramUpdate(update, botToken) {
     console.log(`Received message from ${userId}: ${messageText}`);
 
     try {
-        // For demo purposes, we'll use a default API key
+        // Get API key from bot configuration or environment
         // In production, you'd want to store user-specific API keys
-        const geminiApiKey = process.env.GEMINI_API_KEY;
+        let geminiApiKey = process.env.GEMINI_API_KEY;
+        
+        // For now, we'll prompt users to set their API key via web interface
+        // and store it with the bot config
+        const botConfig = botConfigs.get(botToken);
+        if (botConfig && botConfig.apiKey) {
+            geminiApiKey = botConfig.apiKey;
+        }
         
         if (!geminiApiKey) {
             await sendTelegramMessage(botToken, chatId, 
-                'Sorry, the AI service is not configured. Please contact the administrator.');
+                'Sorry, the AI service is not configured. Please set up your API key via the web interface at https://tnano.netlify.app');
             return;
         }
 
