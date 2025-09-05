@@ -215,7 +215,7 @@ class NanoBananaAI {
     updateWebhookUrl() {
         if (this.botToken) {
             // In a real implementation, this would be your server's webhook endpoint
-            this.webhookUrl = `https://your-server.com/webhook/${this.botToken}`;
+            this.webhookUrl = `https://tnano.netlify.app/webhook/${this.botToken}`;
             this.webhookUrlSpan.textContent = this.webhookUrl;
             this.copyWebhookBtn.disabled = false;
         }
